@@ -1,0 +1,5 @@
+[["cvs-site-1" :site/url "https://www.cvshealth.com" 1 :add]
+ ["cvs-site-1" :site/checked-at "2026-07-18" 1 :add]
+ ["cvs-site-1" :site/http-status 200 1 :add]
+ ["cvs-site-1" :site/title "Leading Health Solutions Company | CVS Health" 1 :add]
+ ["cvs-site-1" :site/description "America&#39;s leading health solutions company, CVS Health® provides advanced health care from pharmacy services and health plans to health and wellness." 1 :add]]
