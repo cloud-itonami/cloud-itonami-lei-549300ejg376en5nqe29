@@ -2,4 +2,5 @@
  :company/lei "549300EJG376EN5NQE29"
  :company/jurisdiction "US-DE"
  :company/website "https://www.cvshealth.com"
- :company/ticker "CVS (NYSE)"}
+ :company/ticker "CVS (NYSE)"
+ :itonami.blueprint/maturity :implemented}
