@@ -1,0 +1,481 @@
+;; Verified public-register citations for the legal entity archived by this repository.
+;;
+;; Every row is checked live by tools/verify_citations.cljs:
+;;   * GET :cite/url must answer HTTP 2xx
+;;   * :cite/expect-substring must appear in the response body
+;;
+;; A URL that cannot be fetched, or whose body no longer carries the claim, is a
+;; DRIFT and fails the gate. Nothing is recorded here that was not retrieved
+;; (all rows were fetched and byte-matched on 2026-08-22).
+;;
+;; THREE independent authorities are cited, not one:
+;;   * GLEIF, the global LEI system
+;;   * the United States, via the SEC's EDGAR submissions API (CVS Health
+;;     Corporation is a domestic operating filer, ticker CVS on the NYSE,
+;;     CIK 0000064803)
+;;   * the issuer itself, at its own published website www.cvshealth.com -- the
+;;     terms page this repository archives (80-data/public/tos.journal.edn
+;;     archives https://www.cvshealth.com/terms-of-use.html, the same URL the
+;;     issuer-* rows cite)
+;;
+;; WHY NO DELAWARE STATE REGISTER IS CITED DIRECTLY. GLEIF names RA000602 --
+;; the Division of Corporations, Department of State, Delaware -- as BOTH the
+;; register of record and the validation authority for this entity (rows
+;; gleif-registered-at, gleif-validated-at), and the registeredAs 2656078 is
+;; the Delaware corporate file number. Delaware publishes no per-entity GET
+;; URL: per-entity lookups on icis.corp.delaware.gov run behind POST/session
+;; flows and certified extracts are paid (see :catalog/unreachable). What the
+;; catalog does instead is corroborate the Delaware claims through independent
+;; authorities that do answer on stable URLs: GLEIF says US-DE and legal form
+;; XTIQ, the ELF code for a Delaware Corporation (rows gleif-jurisdiction,
+;; gleif-legal-form, resolved by the gleif-elf-* definition rows) -> the SEC
+;; prints stateOfIncorporation DE (row sec-state-incorp). GLEIF records the
+;; file number 2656078 three times (registeredAs, validatedAs, and inside the
+;; OpenCorporates id us_de\/2656078 -- rows gleif-registered-as,
+;; gleif-validated-as, gleif-ocid). The SEC and GLEIF never consulted each
+;; other.
+;;
+;; FOUR HONEST WRINKLES, SO A READER DOES NOT MISREAD THEM AS DRIFT:
+;;   1. GLEIF prints the SAME Delaware registered-agent address -- Corporation
+;;      Trust Center, 1209 Orange St, Wilmington DE 19801, care of The
+;;      Corporation Trust Company -- as BOTH the legal address AND the
+;;      headquarters address (rows gleif-legal-address, gleif-hq-address,
+;;      gleif-city, gleif-postal). The operating headquarters is One CVS
+;;      Drive, Woonsocket, Rhode Island 02895, and it is visible ONLY from the
+;;      SEC (rows sec-street, sec-city, sec-state-ri, sec-zip). The two
+;;      authorities do not disagree about a fact -- they answer different
+;;      questions ("legal seat" vs "business address"), and each row cites
+;;      exactly what its own source prints.
+;;   2. The name history is corroborated across both registers WITHOUT a
+;;      shared source: GLEIF carries "CVS Caremark Corporation" as a
+;;      PREVIOUS_LEGAL_NAME (rows gleif-previous-name, gleif-prev-name-type);
+;;      the SEC's formerNames array prints the operative window for
+;;      "CVS CAREMARK CORP" (2006-12-27 to 2014-09-03, row
+;;      sec-former-caremark) and reaches two names further back than GLEIF:
+;;      CVS CORP until 2007 and MELVILLE CORP until 1997 (rows
+;;      sec-former-cvs-corp, sec-former-melville). GLEIF's entity creationDate
+;;      1996-08-22 (row gleif-creation-date) sits exactly at the Melville ->
+;;      CVS restructuring the SEC's windows imply.
+;;   3. GLEIF records a COMPLETED CHANGE_LEGAL_NAME event with effectiveDate
+;;      2025-12-28, recorded 2026-02-22 (rows gleif-name-change-event,
+;;      gleif-name-change-effective). Those dates do NOT match the SEC's
+;;      2014 Caremark window in wrinkle 2 -- GLEIF late-recorded the event
+;;      under its own bookkeeping dates. Both rows cite only what GLEIF
+;;      prints; the SEC row carries the operative window.
+;;   4. "mic":null (row gleif-mic-null): unlike the sibling catalog for
+;;      Intercontinental Exchange (5493000F4ZO33MV32P92), which maps to MIC
+;;      XNYS because that issuer OPERATES an exchange, CVS Health merely LISTS
+;;      on the NYSE (row sec-exchange). A null is cited deliberately: it is
+;;      the absence that distinguishes a listed company from an exchange
+;;      operator.
+;;
+;; THE AETNA / CVS PHARMACY GROUP STRUCTURE IS VISIBLE FROM TWO AUTHORITIES.
+;; GLEIF's relationship graph records 74 direct children for this LEI
+;; (retrieved 2026-08-22 on a single page); among them CVS Pharmacy, Inc.,
+;; CVS Caremark Indemnity Ltd., and SILVERSCRIPT INSURANCE COMPANY (rows
+;; gleif-child-*, cited on the one-page ?page[size]=100 URL so pagination
+;; order cannot fake a drift). The issuer's own site header prints the Aetna
+;; brand as a first-class property (row issuer-aetna-brand). Child names may
+;; legitimately churn as GLEIF relationship records renew; if a gleif-child-*
+;; row drifts, re-retrieve the children URL before concluding anything.
+;;
+;; ROWS THAT WERE DELIBERATELY NOT RECORDED. nextRenewalDate and
+;; lastUpdateDate (GLEIF) drift by design on every annual renewal; the terms
+;; page's "Last Updated" line drifts on every republication; and
+;; https://www.sec.gov/files/company_tickers.json answers 403 to this gate's
+;; User-Agent (measured 2026-08-22) although it answers 200 to browser agents
+;; -- the ticker<->CIK mapping is instead proven inside the submissions
+;; document itself (rows sec-cik, sec-ticker in one body). A catalog row that
+;; is expected to change, or whose host refuses the gate, is not a citation --
+;; it is a scheduled false alarm.
+
+{:catalog/subject
+ #:company{:legal-name "CVS HEALTH CORPORATION"
+           :lei "549300EJG376EN5NQE29"
+           :jurisdiction "US-DE"
+           :registered-at "RA000602"
+           :registered-as "2656078"
+           :legal-form "XTIQ"
+           :website "https://www.cvshealth.com"}
+ :catalog/authorities
+ [{:authority/id :gleif
+   :authority/name "Global Legal Entity Identifier Foundation"
+   :authority/root "https://api.gleif.org/"}
+  {:authority/id :us-sec
+   :authority/name "U.S. Securities and Exchange Commission, EDGAR"
+   :authority/root "https://data.sec.gov/"}
+  {:authority/id :issuer
+   :authority/name "CVS Health Corporation, at its own published website"
+   :authority/root "https://www.cvshealth.com/"}]
+ :catalog/unreachable
+ [{:unreachable/authority "Division of Corporations, Department of State, Delaware (RA000602, register of record)"
+   :unreachable/url "https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx"
+   :unreachable/observed "per-entity lookups run behind POST/session flows and certified extracts are paid; no per-entity GET URL (same observation as the sibling catalogs, re-confirmed pattern 2026-08-22)"
+   :unreachable/consequence "The register GLEIF names as this entity's register of record and validation authority is NOT cited below. The file number 2656078 rests on GLEIF (rows gleif-registered-as, gleif-validated-as, gleif-ocid) plus the SEC's independent DE incorporation record (row sec-state-incorp)."}
+  {:unreachable/authority "U.S. SEC ticker/CIK mapping file (www.sec.gov/files/company_tickers.json)"
+   :unreachable/url "https://www.sec.gov/files/company_tickers.json"
+   :unreachable/observed "HTTP 403 to this gate's User-Agent lei-record-maturity-gate/1.0 (measured 2026-08-22); answers 200 to browser agents"
+   :unreachable/consequence "The ticker<->CIK mapping is proven inside data.sec.gov's submissions document instead (rows sec-cik, sec-ticker appear in one body)."}]
+ :catalog/entries
+ [
+  {:cite/id "gleif-lei"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"lei\":\"549300EJG376EN5NQE29\""
+   :cite/claim "GLEIF issues LEI 549300EJG376EN5NQE29."}
+  {:cite/id "gleif-legal-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"legalName\":{\"name\":\"CVS HEALTH CORPORATION\",\"language\":\"en\"}"
+   :cite/claim "The legal name on that LEI is CVS HEALTH CORPORATION, recorded in English. Corroborated independently by sec-name (which prints it in mixed case: CVS HEALTH Corp)."}
+  {:cite/id "gleif-previous-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"name\":\"CVS Caremark Corporation\""
+   :cite/claim "GLEIF carries CVS Caremark Corporation among the entity's other names -- the pre-2014 legal name (see header wrinkle 2 and row sec-former-caremark for the operative window)."}
+  {:cite/id "gleif-prev-name-type"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"type\":\"PREVIOUS_LEGAL_NAME\""
+   :cite/claim "That other name is typed PREVIOUS_LEGAL_NAME -- GLEIF's own statement that it is history, not an alias."}
+  {:cite/id "gleif-legal-address"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"addressLines\":[\"C\\/O THE CORPORATION TRUST COMPANY\",\"CORPORATION TRUST CENTER\",\"1209 ORANGE ST\"]"
+   :cite/claim "The legal seat is care of The Corporation Trust Company, Corporation Trust Center, 1209 Orange St -- the Delaware registered-agent address, not the operating headquarters (see header wrinkle 1). Raw escaped form (C\\/O) matched deliberately."}
+  {:cite/id "gleif-hq-address"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"addressLines\":[\"CORPORATION TRUST CENTER\",\"1209 ORANGE ST\"]"
+   :cite/claim "GLEIF's headquartersAddress prints the SAME Corporation Trust Center address as the legal seat -- NOT One CVS Drive, Woonsocket (see header wrinkle 1; the operating HQ is row sec-street)."}
+  {:cite/id "gleif-city"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"city\":\"WILMINGTON\""
+   :cite/claim "The legal seat city is Wilmington, Delaware -- not Woonsocket (see header wrinkle 1)."}
+  {:cite/id "gleif-region"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"region\":\"US-DE\""
+   :cite/claim "The legal seat region is US-DE."}
+  {:cite/id "gleif-postal"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"postalCode\":\"19801\""
+   :cite/claim "The legal seat postal code is 19801 (Wilmington DE)."}
+  {:cite/id "gleif-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"jurisdiction\":\"US-DE\""
+   :cite/claim "The entity's jurisdiction is US-DE. Corroborated independently by sec-state-incorp."}
+  {:cite/id "gleif-legal-form"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"legalForm\":{\"id\":\"XTIQ\""
+   :cite/claim "The legal form is ELF code XTIQ. Resolved by the gleif-elf-* definition rows to: Corporation, Delaware, US-DE."}
+  {:cite/id "gleif-category"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"category\":\"GENERAL\""
+   :cite/claim "The entity category is GENERAL (an ordinary operating company, not a fund or branch)."}
+  {:cite/id "gleif-status-active"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"status\":\"ACTIVE\""
+   :cite/claim "The entity status is ACTIVE."}
+  {:cite/id "gleif-registration-issued"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"status\":\"ISSUED\""
+   :cite/claim "The LEI registration status is ISSUED (the LEI itself is live, distinct from the entity status in gleif-status-active)."}
+  {:cite/id "gleif-registered-at"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"registeredAt\":{\"id\":\"RA000602\""
+   :cite/claim "The register of record is RA000602. Resolved by the gleif-ra-* definition rows; NOT directly citable (see :catalog/unreachable)."}
+  {:cite/id "gleif-registered-as"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"registeredAs\":\"2656078\""
+   :cite/claim "The Delaware corporate file number is 2656078. Printed twice more by GLEIF (rows gleif-validated-as, gleif-ocid)."}
+  {:cite/id "gleif-validated-at"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"validatedAt\":{\"id\":\"RA000602\""
+   :cite/claim "The validation authority is the same RA000602 -- Delaware validated its own register entry."}
+  {:cite/id "gleif-validated-as"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"validatedAs\":\"2656078\""
+   :cite/claim "The validated file number matches registeredAs: 2656078."}
+  {:cite/id "gleif-ocid"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"ocid\":\"us_de\\/2656078\""
+   :cite/claim "GLEIF's OpenCorporates id embeds the same Delaware file number a third time: us_de/2656078. Raw escaped form matched deliberately."}
+  {:cite/id "gleif-corroboration"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"corroborationLevel\":\"FULLY_CORROBORATED\""
+   :cite/claim "GLEIF marks the record FULLY_CORROBORATED against the register of record."}
+  {:cite/id "gleif-managing-lou"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"managingLou\":\"5493001KJTIIGC8Y1R12\""
+   :cite/claim "The managing LOU (the LEI issuer maintaining this record) is 5493001KJTIIGC8Y1R12."}
+  {:cite/id "gleif-bic"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"bic\":[\"CVHCUS33XXX\"]"
+   :cite/claim "GLEIF maps the entity to SWIFT BIC CVHCUS33XXX."}
+  {:cite/id "gleif-mic-null"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"mic\":null"
+   :cite/claim "GLEIF maps NO Market Identifier Code to this entity -- CVS Health lists on an exchange but does not operate one (see header wrinkle 4; contrast the sibling ICE catalog's XNYS)."}
+  {:cite/id "gleif-spglobal"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"spglobal\":[\"93625\"]"
+   :cite/claim "GLEIF cross-references S&P Global company id 93625."}
+  {:cite/id "gleif-creation-date"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"creationDate\":\"1996-08-22T00:00:00Z\""
+   :cite/claim "GLEIF records the entity's creation as 1996-08-22 -- the Delaware incorporation at the Melville -> CVS restructuring (see header wrinkle 2 and row sec-former-melville)."}
+  {:cite/id "gleif-initial-registration"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"initialRegistrationDate\":\"2013-04-15T18:16:00Z\""
+   :cite/claim "The LEI itself was first issued 2013-04-15 (under the then-name CVS Caremark Corporation, per wrinkle 2)."}
+  {:cite/id "gleif-name-change-event"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"type\":\"CHANGE_LEGAL_NAME\""
+   :cite/claim "GLEIF records a CHANGE_LEGAL_NAME event for this entity (see header wrinkle 3 before reading dates into it)."}
+  {:cite/id "gleif-name-change-effective"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29"
+   :cite/expect-substring "\"effectiveDate\":\"2025-12-28T00:00:00Z\""
+   :cite/claim "That event's effectiveDate is 2025-12-28 -- GLEIF's bookkeeping date, which does NOT match the SEC's 2014 operative window for the Caremark -> Health rename (header wrinkle 3; row sec-former-caremark carries the operative window)."}
+  {:cite/id "gleif-ra-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"code\":\"RA000602\""
+   :cite/claim "RA000602 exists in GLEIF's registration-authority list."}
+  {:cite/id "gleif-ra-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"internationalOrganizationName\":\"Division of Corporations, Department of State\""
+   :cite/claim "RA000602 resolves to the Division of Corporations, Department of State (Delaware)."}
+  {:cite/id "gleif-ra-website"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"website\":\"https:\\/\\/corp.delaware.gov\\/\""
+   :cite/claim "The register's own website is corp.delaware.gov (raw escaped form matched); its per-entity pages are nonetheless not GET-able (see :catalog/unreachable)."}
+  {:cite/id "gleif-elf-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"code\":\"XTIQ\""
+   :cite/claim "ELF code XTIQ exists in GLEIF's entity-legal-form list."}
+  {:cite/id "gleif-elf-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"localName\":\"Corporation\""
+   :cite/claim "XTIQ resolves to the legal form: Corporation."}
+  {:cite/id "gleif-elf-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"jurisdiction\":\"Delaware\""
+   :cite/claim "XTIQ is the Delaware corporation form specifically."}
+  {:cite/id "gleif-elf-subdivision"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"subdivisionCode\":\"US-DE\""
+   :cite/claim "XTIQ's subdivision code US-DE matches the entity's jurisdiction (row gleif-jurisdiction)."}
+  {:cite/id "gleif-child-cvs-pharmacy"
+   :cite/authority :gleif
+   :cite/row-kind :relationship
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29/direct-children?page%5Bsize%5D=100"
+   :cite/expect-substring "\"name\":\"CVS Pharmacy, Inc.\""
+   :cite/claim "GLEIF's relationship graph records CVS Pharmacy, Inc. as a direct child (see header: children churn note)."}
+  {:cite/id "gleif-child-caremark-indemnity"
+   :cite/authority :gleif
+   :cite/row-kind :relationship
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29/direct-children?page%5Bsize%5D=100"
+   :cite/expect-substring "\"name\":\"CVS Caremark Indemnity Ltd.\""
+   :cite/claim "A direct child still carries the Caremark name -- the group's own graph corroborates the name history in wrinkle 2."}
+  {:cite/id "gleif-child-silverscript"
+   :cite/authority :gleif
+   :cite/row-kind :relationship
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300EJG376EN5NQE29/direct-children?page%5Bsize%5D=100"
+   :cite/expect-substring "\"name\":\"SILVERSCRIPT INSURANCE COMPANY\""
+   :cite/claim "SilverScript Insurance Company (the Medicare Part D insurer) is a direct child -- the pharmacy-benefits side of the group, visible from GLEIF alone."}
+  {:cite/id "sec-cik"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"cik\":\"0000064803\""
+   :cite/claim "The SEC files this issuer under CIK 0000064803."}
+  {:cite/id "sec-name"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"name\":\"CVS HEALTH Corp\""
+   :cite/claim "The SEC prints the name as CVS HEALTH Corp -- same entity as gleif-legal-name, per-source spelling."}
+  {:cite/id "sec-ticker"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"tickers\":[\"CVS\"]"
+   :cite/claim "The ticker is CVS. Appears in the same body as sec-cik, so the ticker<->CIK mapping needs no second URL (see :catalog/unreachable)."}
+  {:cite/id "sec-exchange"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"exchanges\":[\"NYSE\"]"
+   :cite/claim "The listing exchange is the NYSE (see header wrinkle 4: CVS lists on it; the sibling catalog's ICE operates it)."}
+  {:cite/id "sec-state-incorp"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"stateOfIncorporation\":\"DE\""
+   :cite/claim "The SEC independently records Delaware incorporation -- corroborating gleif-jurisdiction without consulting GLEIF."}
+  {:cite/id "sec-sic"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"sic\":\"5912\""
+   :cite/claim "The SEC classifies the issuer under SIC 5912."}
+  {:cite/id "sec-sic-desc"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"sicDescription\":\"Retail-Drug Stores and Proprietary Stores\""
+   :cite/claim "SIC 5912 resolves to Retail-Drug Stores and Proprietary Stores -- the sector, from the SEC's own print."}
+  {:cite/id "sec-ein"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"ein\":\"050494040\""
+   :cite/claim "The IRS employer identification number on file with the SEC is 05-0494040."}
+  {:cite/id "sec-street"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"street1\":\"ONE CVS DR.\""
+   :cite/claim "The SEC's business address is One CVS Drive -- the operating headquarters GLEIF does not print (header wrinkle 1)."}
+  {:cite/id "sec-city"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"city\":\"WOONSOCKET\""
+   :cite/claim "The operating city is Woonsocket -- not Wilmington (header wrinkle 1)."}
+  {:cite/id "sec-state-ri"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"stateOrCountry\":\"RI\""
+   :cite/claim "The operating state is Rhode Island -- a different state than the state of incorporation (rows sec-state-incorp, gleif-region)."}
+  {:cite/id "sec-zip"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"zipCode\":\"02895\""
+   :cite/claim "The operating ZIP is 02895 (Woonsocket RI)."}
+  {:cite/id "sec-phone"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"phone\":\"4017651500\""
+   :cite/claim "The business phone on file is 401-765-1500 (a Rhode Island area code, consistent with sec-state-ri)."}
+  {:cite/id "sec-fye"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "\"fiscalYearEnd\":\"1231\""
+   :cite/claim "The fiscal year ends December 31."}
+  {:cite/id "sec-former-caremark"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "{\"name\":\"CVS CAREMARK CORP\",\"from\":\"2006-12-27T05:00:00.000Z\",\"to\":\"2014-09-03T04:00:00.000Z\"}"
+   :cite/claim "The SEC prints the operative window of the Caremark name: 2006-12-27 to 2014-09-03 -- the independent corroboration of GLEIF's PREVIOUS_LEGAL_NAME (header wrinkle 2) and the operative dates wrinkle 3's GLEIF event lacks."}
+  {:cite/id "sec-former-cvs-corp"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "{\"name\":\"CVS CORP\",\"from\":\"1997-02-07T05:00:00.000Z\",\"to\":\"2007-03-22T04:00:00.000Z\"}"
+   :cite/claim "Before Caremark, the filer was CVS CORP (1997-2007) -- one name further back than GLEIF carries."}
+  {:cite/id "sec-former-melville"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000064803.json"
+   :cite/expect-substring "{\"name\":\"MELVILLE CORP\",\"from\":\"1994-03-31T05:00:00.000Z\",\"to\":\"1997-01-10T05:00:00.000Z\"}"
+   :cite/claim "And before that, MELVILLE CORP until 1997-01-10 -- the restructuring within months of which GLEIF dates the present Delaware entity's creation (row gleif-creation-date, 1996-08-22)."}
+  {:cite/id "issuer-terms-title"
+   :cite/authority :issuer
+   :cite/row-kind :attribute
+   :cite/url "https://www.cvshealth.com/terms-of-use.html"
+   :cite/expect-substring "CVSHealth.com: Notice of Terms of Use"
+   :cite/claim "The issuer publishes its terms page at cvshealth.com/terms-of-use.html -- the same URL archived in 80-data/public/tos.journal.edn."}
+  {:cite/id "issuer-company-definition"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.cvshealth.com/terms-of-use.html"
+   :cite/expect-substring "control of CVS Health Corporation and any affiliates (together, the “Company”)"
+   :cite/claim "The issuer's own page prints the exact legal name CVS Health Corporation and defines it (with affiliates) as the Company -- the issuer's independent statement of the name GLEIF records in caps and the SEC in mixed case."}
+  {:cite/id "issuer-services-definition"
+   :cite/authority :issuer
+   :cite/row-kind :attribute
+   :cite/url "https://www.cvshealth.com/terms-of-use.html"
+   :cite/expect-substring "www.cvshealth.com or our other properties where this Terms of Use is posted"
+   :cite/claim "The terms define the Services around www.cvshealth.com -- the website recorded in blueprint.edn and :catalog/subject."}
+  {:cite/id "issuer-trademark"
+   :cite/authority :issuer
+   :cite/row-kind :attribute
+   :cite/url "https://www.cvshealth.com/terms-of-use.html"
+   :cite/expect-substring "The CVS Health® and all other trademarks, service marks"
+   :cite/claim "The issuer asserts the CVS Health® mark on the same page -- brand and legal name coincide."}
+  {:cite/id "issuer-aetna-brand"
+   :cite/authority :issuer
+   :cite/row-kind :relationship
+   :cite/url "https://www.cvshealth.com/terms-of-use.html"
+   :cite/expect-substring "data-analytics-name=\"Aetna®\">Aetna®</a>"
+   :cite/claim "The issuer's own site header links the Aetna® brand as a first-class property -- the issuer-side print of the group structure GLEIF's children rows show (many Aetna entities among the 74 direct children)."}
+ ]}
